@@ -55,16 +55,18 @@ class CampersById(Resource):
             return make_response(response_body, 404)
         
     def patch(self, id): 
-        camper = db.session.get(Camper, id)
-        req = request.get_json()
-        if camper: 
+        if camper := db.session.get(Camper, id): 
+            req = request.get_json()
             try: 
                 for attr in req: 
                     setattr(camper, attr, req.get(attr))
+                # for key, value in req.items(): 
+                    # setattr(camper, key, value)
                 db.session.add(camper)
                 db.session.commit()
                 return make_response(camper.to_dict(only=('id', 'name', 'age')), 202)
-            except: 
+            except Exception as e: 
+                # return make_response({'errors': str(e)}, 400)
                 return make_response({'errors': ['validation errors']}, 400)
         else:
             response_body = {"error": "Camper not found"}
@@ -93,6 +95,10 @@ class ActivitiesById(Resource):
 api.add_resource(ActivitiesById, '/activities/<int:id>')
 
 class Signups(Resource):
+    def get(self):
+        signups = [s.to_dict() for s in Signup.query.all()]
+        return make_response(signups, 200)
+    
     def post(self):
         req = request.get_json()
         try:
